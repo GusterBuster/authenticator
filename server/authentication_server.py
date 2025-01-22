@@ -16,9 +16,9 @@ def get_spectrum(sampling_rate, audio):
     mags = []
     for r in sx:
         mags.append(np.mean(r * np.conjugate(r)))
-    mags = np.real(np.array(mags))
-    mags /= np.linalg.norm(mags)
-    return mags[1:]
+    mags = np.real(np.array(mags))[1:]
+    mags /= np.sum(mags)
+    return mags
 
 def compress_by(audio, s):
     arr = []
@@ -36,7 +36,8 @@ def get_final_spectrum_single(file_name, base_sampling_rate = 16000):
     if audio.ndim > 1:
         audio = audio.mean(axis=1)
     s = get_spectrum(base_sampling_rate, compress_by(audio, sampling_rate//base_sampling_rate))
-    return smooth(s)
+    return s
+    # return smooth(s)
 
 # IF CHANGING BASE SAMPLING RATE, SMOOTH NEEDS TO BE UPDATED TOO
 
@@ -58,13 +59,14 @@ def webm_to_wave(input_file, output_file):
     try:
         # Run the FFmpeg command to convert the file
         subprocess.run(
-            ['ffmpeg', '-i', input_file, '-vn', output_file]
+            ['ffmpeg', '-i', input_file, '-vn', output_file, '-y']
         )
         print(f"Conversion successful: {output_file}")
     except subprocess.CalledProcessError as e:
         print(f"An error occurred during conversion: {e}")
 
-sample_audio_files = ["audio_files/open sesame" + (" " + str(i) if i > 1 else "") + ".wav" for i in range(1, 4)]
+sample_folder = "audio_samples"
+sample_audio_files = [os.path.join(sample_folder, f) for f in os.listdir(sample_folder)]
 base_spectrum = get_final_spectrum_multiple(sample_audio_files)
 UPLOAD_FOLDER = "./uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
